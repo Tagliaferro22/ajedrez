@@ -68,27 +68,45 @@ def get_square_under_mouse(pos):
     row = BOARD_SIZE - 1 - row  # Invertir la fila para alinear el tablero
     return chess.square(col, row)
 
+# Función para resaltar las casillas disponibles
+def highlight_moves(board, selected_square):
+    if selected_square is None:
+        return
+    
+    legal_moves = [move for move in board.legal_moves if move.from_square == selected_square]
+    
+    highlight_color = (0, 255, 0, 100)  # Verde semitransparente
+    for move in legal_moves:
+        to_square = move.to_square
+        row, col = divmod(to_square, 8)
+        pygame.draw.rect(screen, highlight_color, pygame.Rect(col * SQUARE_SIZE, (7 - row) * SQUARE_SIZE, SQUARE_SIZE, SQUARE_SIZE))
+
 # Ciclo principal
 running = True
 while running:
     draw_board()
     draw_pieces(board)
 
+    # Si hay una pieza seleccionada, resaltar las casillas de movimiento
+    if selected_square is not None:
+        highlight_moves(board, selected_square)
+
+    pygame.display.flip()  # Actualizar la pantalla más frecuentemente
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             running = False
-        if event.type == pygame.MOUSEBUTTONDOWN:
-            if player_turn == chess.WHITE:
-                # Lógica para que el jugador haga un movimiento
-                pos = pygame.mouse.get_pos()
-                # Aquí va la lógica para detectar clics y realizar movimientos.
-                # Después de que el jugador haga un movimiento válido:
-                square = get_square_under_mouse(pos)
+        if event.type == pygame.MOUSEBUTTONDOWN and player_turn == chess.WHITE:
+            pos = pygame.mouse.get_pos()
+            square = get_square_under_mouse(pos)
 
-                if selected_square is None:
-                    # Seleccionar pieza
-                    if board.piece_at(square) and board.color_at(square) == chess.WHITE:
-                        selected_square = square
+            if selected_square is None:
+                # Seleccionar pieza
+                if board.piece_at(square) and board.color_at(square) == chess.WHITE:
+                    selected_square = square
+            else:
+                # Si se selecciona la misma pieza, deseleccionarla
+                if selected_square == square:
+                    selected_square = None
                 else:
                     # Intentar mover la pieza seleccionada
                     move = chess.Move(selected_square, square)
@@ -96,13 +114,16 @@ while running:
                         board.push(move)
                         player_turn = chess.BLACK
                     selected_square = None
-    
+                    # Permitir cambiar la selección a una nueva pieza
+                    if board.piece_at(square) and board.color_at(square) == chess.WHITE:
+                        selected_square = square
+
     # Si es el turno de la IA
     if player_turn == chess.BLACK:
+        pygame.time.wait(1000)  # Añadir un retraso de 1 segundo
         ai_move()
         player_turn = chess.WHITE  # Cambiar el turno al jugador
 
-    pygame.display.flip()
 
 engine.quit()
 pygame.quit()
