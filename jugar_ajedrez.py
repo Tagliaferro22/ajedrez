@@ -75,11 +75,15 @@ def highlight_moves(board, selected_square):
     
     legal_moves = [move for move in board.legal_moves if move.from_square == selected_square]
     
-    highlight_color = (0, 255, 0, 100)  # Verde semitransparente
+    # Crear una superficie semitransparente
+    highlight_surface = pygame.Surface((SQUARE_SIZE, SQUARE_SIZE), pygame.SRCALPHA)
+    highlight_surface.fill((0, 255, 0, 128))  # Verde semitransparente, el valor 128 es el nivel de transparencia
+    
     for move in legal_moves:
         to_square = move.to_square
         row, col = divmod(to_square, 8)
-        pygame.draw.rect(screen, highlight_color, pygame.Rect(col * SQUARE_SIZE, (7 - row) * SQUARE_SIZE, SQUARE_SIZE, SQUARE_SIZE))
+        # Dibujar la superficie semitransparente sobre el tablero
+        screen.blit(highlight_surface, (col * SQUARE_SIZE, (7 - row) * SQUARE_SIZE))
 
 # Ciclo principal
 running = True
@@ -91,16 +95,19 @@ while running:
     if selected_square is not None:
         highlight_moves(board, selected_square)
 
-    pygame.display.flip()  # Actualizar la pantalla más frecuentemente
+    # Actualizar la pantalla con los cambios
+    pygame.display.update()
+
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             running = False
+
         if event.type == pygame.MOUSEBUTTONDOWN and player_turn == chess.WHITE:
             pos = pygame.mouse.get_pos()
             square = get_square_under_mouse(pos)
 
             if selected_square is None:
-                # Seleccionar pieza
+                # Seleccionar pieza blanca
                 if board.piece_at(square) and board.color_at(square) == chess.WHITE:
                     selected_square = square
             else:
@@ -120,9 +127,13 @@ while running:
 
     # Si es el turno de la IA
     if player_turn == chess.BLACK:
-        pygame.time.wait(1000)  # Añadir un retraso de 1 segundo
+        pygame.display.update()  # Asegurar que los movimientos del jugador se vean antes del turno de la IA
+        pygame.time.delay(1000)  # Añadir retraso antes de que la IA haga su movimiento (1 segundo)
         ai_move()
-        player_turn = chess.WHITE  # Cambiar el turno al jugador
+        player_turn = chess.WHITE
+
+    # Reflejar inmediatamente el movimiento de la IA también
+    pygame.display.update()
 
 
 engine.quit()
